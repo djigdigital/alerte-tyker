@@ -1,0 +1,40 @@
+name: Alerte ANT
+
+on:
+  schedule:
+    - cron: "53 8 * * 1-5"
+    - cron: "43 14 * * 1-5"
+    - cron: "33 20 * * 1-5"
+  workflow_dispatch: {}
+
+concurrency:
+  group: alerte-ant
+  cancel-in-progress: false
+
+jobs:
+  surveiller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install yfinance requests tzdata
+
+      - name: Surveiller ANT
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_EXPEDITEUR: ${{ secrets.EMAIL_EXPEDITEUR }}
+          EMAIL_MOT_DE_PASSE: ${{ secrets.EMAIL_MOT_DE_PASSE }}
+          EMAIL_DESTINATAIRE: ${{ secrets.EMAIL_DESTINATAIRE }}
+          DUREE_MAX_MINUTES: "345"
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python alerte_ant.py --test
+          fi
+          python alerte_ant.py
